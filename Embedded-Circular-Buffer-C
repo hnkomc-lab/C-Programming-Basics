@@ -1,0 +1,102 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#define BUFFER_SIZE 5  
+
+typedef struct {
+    uint8_t data[BUFFER_SIZE];
+    uint8_t head;  
+    uint8_t tail; 
+    uint8_t count;
+} CircularBuffer_t;
+
+
+void Buffer_Init(CircularBuffer_t *buf) {
+    buf->head = 0;
+    buf->tail = 0;
+    buf->count = 0;
+}
+
+
+bool Buffer_IsFull(CircularBuffer_t *buf) {
+    return buf->count == BUFFER_SIZE;
+}
+
+
+bool Buffer_IsEmpty(CircularBuffer_t *buf) {
+    return buf->count == 0;
+}
+
+
+bool Buffer_Enqueue(CircularBuffer_t *buf, uint8_t val) {
+    if (Buffer_IsFull(buf)) {
+        printf("[ BUFFER OVERFLOW] Cannot enqueue 0x%02X. Buffer is completely full!\n", val);
+        return false;
+    }
+    
+    buf->data[buf->head] = val;
+    printf("[ Enqueue] Stored 0x%02X at Index [%d]\n", val, buf->head);
+    
+    
+    buf->head++;
+    if (buf->head >= BUFFER_SIZE) {
+        buf->head = 0; // Wrap around to the beginning
+        printf("[Wrap] Head reached max boundary. Wrapped around to Index 0.\n");
+    }
+    
+    buf->count++;
+    return true;
+}
+
+
+bool Buffer_Dequeue(CircularBuffer_t *buf, uint8_t *val) {
+    if (Buffer_IsEmpty(buf)) {
+        printf("[BUFFER UNDERFLOW] Cannot dequeue. No data available!\n");
+        return false;
+    }
+    
+    *val = buf->data[buf->tail];
+    printf("[Dequeue] Read 0x%02X from Index [%d]\n", *val, buf->tail);
+    
+    buf->tail++;
+    if (buf->tail >= BUFFER_SIZE) {
+        buf->tail = 0; 
+    }
+    
+    buf->count--;
+    return true;
+}
+
+int main() {
+    CircularBuffer_t rx_buffer;
+    Buffer_Init(&rx_buffer);
+    uint8_t rx_data;
+
+    printf("---  STARTING EMBEDDED CIRCULAR BUFFER SIMULATION ---\n\n");
+
+   
+    printf(" Action: Simulating rapid incoming UART data packets...\n");
+    Buffer_Enqueue(&rx_buffer, 0xA1);
+    Buffer_Enqueue(&rx_buffer, 0xB2);
+    Buffer_Enqueue(&rx_buffer, 0xC3);
+    Buffer_Enqueue(&rx_buffer, 0xD4);
+    Buffer_Enqueue(&rx_buffer, 0xE5);
+
+   
+    printf("\nAction: Attempting to force an overflow event...\n");
+    Buffer_Enqueue(&rx_buffer, 0xFF); 
+
+    
+    printf("\nAction: CPU is freeing up space by processing 2 packets...\n");
+    Buffer_Dequeue(&rx_buffer, &rx_data);
+    Buffer_Dequeue(&rx_buffer, &rx_data);
+
+    
+    printf("\nAction: Adding new data to verify the circular wrap-around functions...\n");
+    Buffer_Enqueue(&rx_buffer, 0x77);
+    Buffer_Enqueue(&rx_buffer, 0x88);
+
+    printf("\n---  SIMULATION COMPLETE ---\n");
+    return 0;
+}
