@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 
-#define TXE  0  // Bit 0: Transmit Data Register Empty
-#define RXNE 1  // Bit 1: Read Data Register Not Empty
+#define TXE  0  
+#define RXNE 1  
 
 
 uint8_t UART_SR = 0x01; 
